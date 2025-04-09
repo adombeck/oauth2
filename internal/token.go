@@ -15,6 +15,8 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -209,6 +211,45 @@ func cloneURLValues(v url.Values) url.Values {
 	return v2
 }
 
+func PrettyURLValues(values url.Values) string {
+	var b strings.Builder
+	b.WriteString("{\n")
+
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for i, k := range keys {
+		b.WriteString("  \"")
+		b.WriteString(k)
+		b.WriteString("\": ")
+
+		vals := values[k]
+		if len(vals) == 1 {
+			b.WriteString("\"" + vals[0] + "\"")
+		} else {
+			b.WriteString("[")
+			for j, v := range vals {
+				b.WriteString("\"" + v + "\"")
+				if j < len(vals)-1 {
+					b.WriteString(", ")
+				}
+			}
+			b.WriteString("]")
+		}
+
+		if i < len(keys)-1 {
+			b.WriteString(",")
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("}")
+	return b.String()
+}
+
 func RetrieveToken(ctx context.Context, clientID, clientSecret, tokenURL string, v url.Values, authStyle AuthStyle, styleCache *AuthStyleCache) (*Token, error) {
 	needsAuthStyleProbe := authStyle == 0
 	if needsAuthStyleProbe {
@@ -223,6 +264,7 @@ func RetrieveToken(ctx context.Context, clientID, clientSecret, tokenURL string,
 	if err != nil {
 		return nil, err
 	}
+	fmt.Fprintf(os.Stderr, "XXX: oauth2.RetrieveToken\n┕━ POST %s\n%s\n", tokenURL, PrettyURLValues(v))
 	token, err := doTokenRoundTrip(ctx, req)
 	if err != nil && needsAuthStyleProbe {
 		// If we get an error, assume the server wants the

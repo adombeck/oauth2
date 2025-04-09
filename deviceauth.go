@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -104,6 +105,7 @@ func retrieveDeviceAuth(ctx context.Context, c *Config, v url.Values) (*DeviceAu
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
+	fmt.Fprintf(os.Stderr, "XXX: oauth2.retrieveDeviceAuth\n┕━ POST %s\n%s\n", c.Endpoint.DeviceAuthURL, internal.PrettyURLValues(v))
 
 	t := time.Now()
 	r, err := internal.ContextClient(ctx).Do(req)
